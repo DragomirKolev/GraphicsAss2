@@ -8,7 +8,7 @@ Iain Martin November 2014
 #include "noise.h"
 
 using namespace noise;
-
+int whateverValue = 1;
 GLdouble scaleForTerrain = 15.0;
 GLdouble frequencyOfTerrain = 2;
 
@@ -35,9 +35,10 @@ terrain_object::~terrain_object()
 	if (normals) delete[] normals;
 }
 
-void terrain_object::getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed){
+void terrain_object::getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed, int whateverValuePassed){
 	scaleForTerrain = scaleTerrainPassed;
 	frequencyOfTerrain = frequencyForTerrainPassed; 
+	whateverValue = whateverValuePassed;
 }
 
 
@@ -189,12 +190,14 @@ void terrain_object::calculateNoise()
 				value = myModule.GetValue(row / scaleForTerrain, col / scaleForTerrain, 0);
 			//	std::cout << "frequencyOfTerrain" << std::endl;
 			//	std::cout << frequencyOfTerrain << std::endl;
-				noise[(row * xsize + col) * perlin_octaves + oct] = value*frequencyOfTerrain;
+				noise[(row * xsize + col) * perlin_octaves + oct] = value*scaleForTerrain;
 
 			}
 
 		}
+
 	}
+
 }
 
 /* Define the vertex array that specifies the terrain

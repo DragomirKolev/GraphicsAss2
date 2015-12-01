@@ -25,11 +25,12 @@ also includes the OpenGL extension initialisation*/
 #include "terrain_object.h"
 GLdouble tempScaleTerrain, scaleTerrain = 15.0;
 GLdouble tempFrequencyForTerrain, FrequencyForTerrain = 2;
+int whateverValueToPass, tempWhateverValueToPass = 1;
 /* Define buffer object indices */
 GLuint positionBufferObject, colourObject, normalsBufferObject;
 GLuint sphereBufferObject, sphereNormals, sphereColours, sphereTexCoords;
 GLuint elementbuffer;
-
+object_ldr monkey;
 GLuint program;		/* Identifier for the shader prgoram */
 GLuint vao;			/* Vertex array (Containor) object. This is the index of the VAO that will be the container for
 					our buffer objects */
@@ -51,7 +52,7 @@ GLuint colourmodeID;
 GLfloat aspect_ratio;		/* Aspect ratio of the window defined in the reshape callback*/
 GLuint numspherevertices;
 
-object_ldr monkey;
+
 
 terrain_object *heightfield;
 int octaves;
@@ -80,7 +81,7 @@ void init(GLWrapper *glw)
 	angle_x = 295.f;
 	angle_y = angle_z = 0;
 	angle_inc_x = angle_inc_y = angle_inc_z = 0;
-	scale = 0.33f;
+	scale = 0.15f;
 	aspect_ratio = 1.3333f;
 	colourmode = 0;
 	numlats = 20;		// Number of latitudes in our sphere
@@ -245,15 +246,18 @@ void init(GLWrapper *glw)
 	/* create the sphere object */
 	numspherevertices = makeSphereVBO(numlats, numlongs);
 
+	
+
 	/* Load and create our monkey object*/
-	//monkey.load_obj("monkey.obj");
+	monkey.load_obj("monkey.obj");
 
 	/* Calculate vertex normals using cross products from the surrounding faces*/
 	/* A better way to do this would be to generate the vertex normals in Blender and
 	/* then extract the vertex normals from the face definitions and use that to create an
 	/* accurate array of veretx normals */
-	//monkey.smoothNormals();
-	//monkey.createObject();
+	monkey.smoothNormals();
+	monkey.createObject();
+
 
 	/* Create the heightfield object */
 	octaves = 1;
@@ -261,7 +265,7 @@ void init(GLWrapper *glw)
 	perlin_frequency = 1.f;
 	land_size = 50.f;
 	heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-	heightfield->createTerrain(100, 100, land_size, land_size);
+	heightfield->createTerrain(200, 200, land_size, land_size);
 	heightfield->createObject();
 
 	/* Load and build the vertex and fragment shaders */
@@ -316,7 +320,7 @@ void display()
 
 	// Define the model transformations for the cube
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(x + 0.5, y, z));
+	model = glm::translate(model, glm::vec3(x + 0.5, y +0.8, z));
 	model = glm::scale(model, glm::vec3(scale, scale, scale));//scale equally in all axis
 	model = glm::rotate(model, -angle_x - 50.f, glm::vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
 	model = glm::rotate(model, -angle_y, glm::vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
@@ -327,7 +331,7 @@ void display()
 
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0, 4), // Camera is at (0,0,4), in World Space
+		glm::vec3(0, 0, 5), // Camera is at (0,0,4), in World Space
 		glm::vec3(0, 0, 0), // and looks at the origin
 		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
 		);
@@ -339,7 +343,7 @@ void display()
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &Projection[0][0]);
 
 	/* Draw our Blender Monkey object */
-	//monkey.drawObject();
+	monkey.drawObject();
 	/* Define the model transformations for our sphere */
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(-x - 0.5, 0, 0));
@@ -349,15 +353,12 @@ void display()
 	model = glm::rotate(model, -angle_z, glm::vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
 
-	/* Draw our sphere */
-	//drawSphere();
 	
-	
-	heightfield->getValuesFromTerrainClass(scaleTerrain,FrequencyForTerrain);
+	heightfield->getValuesFromTerrainClass(scaleTerrain,FrequencyForTerrain, whateverValueToPass);
 	if (tempScaleTerrain != scaleTerrain){
 		delete heightfield;
 		heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-		heightfield->createTerrain(200, 200, land_size, land_size);
+		heightfield->createTerrain(200 + whateverValueToPass, 200 + whateverValueToPass, land_size, land_size);
 		heightfield->createObject();
 		std::cout << "scale";
 		std::cout << scaleTerrain;
@@ -366,14 +367,16 @@ void display()
 	if (tempFrequencyForTerrain != FrequencyForTerrain){
 		delete heightfield;
 		heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-		heightfield->createTerrain(200, 200, land_size, land_size);
+		heightfield->createTerrain(200 + whateverValueToPass, 200 + whateverValueToPass, land_size, land_size);
 		heightfield->createObject();
-		std::cout << "scale";
+		std::cout << "frequency";
 		std::cout << FrequencyForTerrain;
 	}
 	heightfield->drawObject(drawmode);
 	tempScaleTerrain = scaleTerrain;
 	tempFrequencyForTerrain = FrequencyForTerrain;
+	tempWhateverValueToPass = whateverValueToPass;
+
 	glDisableVertexAttribArray(0);
 	glUseProgram(0);
 
@@ -406,16 +409,34 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	if (key == 'R') angle_inc_y += 0.05f;
 	if (key == 'T') angle_inc_z -= 0.05f;
 	if (key == 'Y') angle_inc_z += 0.05f;
-	if (key == 'A') scale -= 0.02f;
-	if (key == 'S') scale += 0.02f;
+	if (key == 'A'){
+
+		scale -= 0.02f;
+		scaleTerrain -= 1.0;
+		whateverValueToPass -= 10;
+	}
+	if (key == 'S'){
+
+		scale += 0.02f;
+		scaleTerrain += 1.0;
+		whateverValueToPass += 10;
+		
+	}
 	if (key == 'Z') x -= 0.05f;
 	if (key == 'X') x += 0.05f;
 	if (key == 'C') y -= 0.05f;
 	if (key == 'V') y += 0.05f;
 	if (key == 'B') z -= 0.05f;
 	if (key == 'N') z += 0.05f;
-	if (key == 'J') scaleTerrain += 1.0;
-	if (key == 'K') scaleTerrain -= 1.0;
+	if (key == 'J') {
+		scaleTerrain += 1.0;
+		whateverValueToPass += 10;
+	}
+	if (key == 'K'){
+
+		scaleTerrain -= 1.0;
+		whateverValueToPass -= 10;
+	}
 	if (key == '8') FrequencyForTerrain += 5;
 	if (key == '9') FrequencyForTerrain -= 5;
 	

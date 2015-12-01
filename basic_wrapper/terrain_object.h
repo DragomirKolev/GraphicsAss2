@@ -18,7 +18,7 @@ public:
 
 	void calculateNoise();
 	void calculateNoiseGLM();
-	void getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed);
+	void getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed, int whateverValue);
 	void createTerrain(GLuint xp, GLuint yp, GLfloat xs, GLfloat ys);
 	void calculateNormals();
 	void stretchToRange(GLfloat min, GLfloat max);
