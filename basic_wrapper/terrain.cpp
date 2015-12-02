@@ -24,8 +24,8 @@ also includes the OpenGL extension initialisation*/
 #include "object_ldr.h"
 #include "terrain_object.h"
 GLdouble tempScaleTerrain, scaleTerrain = 15.0;
-GLdouble tempFrequencyForTerrain, FrequencyForTerrain = 2;
-int whateverValueToPass, tempWhateverValueToPass = 1;
+GLdouble tempFrequencyForTerrain, FrequencyForTerrain = 1;
+int SizeOfTerrain, tempSizeOfTerrain = 1;
 /* Define buffer object indices */
 GLuint positionBufferObject, colourObject, normalsBufferObject;
 GLuint sphereBufferObject, sphereNormals, sphereColours, sphereTexCoords;
@@ -249,7 +249,7 @@ void init(GLWrapper *glw)
 	
 
 	/* Load and create our monkey object*/
-	monkey.load_obj("monkey.obj");
+	monkey.load_obj("Monkey.obj");
 
 	/* Calculate vertex normals using cross products from the surrounding faces*/
 	/* A better way to do this would be to generate the vertex normals in Blender and
@@ -318,20 +318,20 @@ void display()
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBufferObject);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	// Define the model transformations for the cube
+	// Define the model transformations for the monkey
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(x + 0.5, y +0.8, z));
-	model = glm::scale(model, glm::vec3(scale, scale, scale));//scale equally in all axis
-	model = glm::rotate(model, -angle_x - 50.f, glm::vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
-	model = glm::rotate(model, -angle_y, glm::vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
-	model = glm::rotate(model, -angle_z, glm::vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
+	model = glm::translate(model, glm::vec3(x + 2.3, y +1.2, z));
+	model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));//scale equally in all axis
+	model = glm::rotate(model, 20.0f, glm::vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
+	model = glm::rotate(model, -30.0f, glm::vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
+	model = glm::rotate(model, 90.0f, glm::vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	glm::mat4 Projection = glm::perspective(30.0f, aspect_ratio, 0.1f, 100.0f);
 
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0, 5), // Camera is at (0,0,4), in World Space
+		glm::vec3(0, 0, 5), // Camera is at (0,0,5), in World Space
 		glm::vec3(0, 0, 0), // and looks at the origin
 		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
 		);
@@ -344,7 +344,7 @@ void display()
 
 	/* Draw our Blender Monkey object */
 	monkey.drawObject();
-	/* Define the model transformations for our sphere */
+
 	model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(-x - 0.5, 0, 0));
 	model = glm::scale(model, glm::vec3(scale / 3.f, scale / 3.f, scale / 3.f));//scale equally in all axis
@@ -353,29 +353,41 @@ void display()
 	model = glm::rotate(model, -angle_z, glm::vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
 
-	
-	heightfield->getValuesFromTerrainClass(scaleTerrain,FrequencyForTerrain, whateverValueToPass);
+	//this function passes values to the terrain_object class so that it knows when something is modified, what values to use
+	heightfield->getValuesFromTerrainClass(scaleTerrain,FrequencyForTerrain, SizeOfTerrain);
+	// doesn't do anything if the scale is not changed 
 	if (tempScaleTerrain != scaleTerrain){
+		//if the scale is changed it recreates the new heightfield with the parameters passed
 		delete heightfield;
 		heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-		heightfield->createTerrain(200 + whateverValueToPass, 200 + whateverValueToPass, land_size, land_size);
+		//this is one of the more imporntant lines of code in this assignement ( SizeOfTerrain value is only being added to the current terrain, by doing that it increases the detail in the terrain ) 
+		
+		heightfield->createTerrain(200 + SizeOfTerrain, 200 + SizeOfTerrain, land_size, land_size);
+		// the next like of code that is commented out, if it is used in place of the current one it will make the terrain more and more detaild everytime you zoom in.
+		//(  CAUTION DO NOT ZOOM BACK OR IT WILL BREAK ! array goes out of bounds, this peace of code is there only to show how the detail can be increased by a lot!)
+		//heightfield->createTerrain(200 + SizeOfTerrain*10, 200 + SizeOfTerrain*10, land_size, land_size);
+		// Obviously the previous line of code is not optimal because it rerenders the whole terrain, ideally it would only render the verticies in the terrain that is in the field of view, which would make it faster.
+		// Also having this in the tessalation shader would increase the speed by a lot since it would run in the GPU and not the CPU, but for this assignement there was not enough time to explore that option
 		heightfield->createObject();
 		std::cout << "scale";
 		std::cout << scaleTerrain;
 		
 	}
+	// This if statement runs only if the frequency of the terrain is changed, if it s then it recreates the terrain with the new frequency
+	
 	if (tempFrequencyForTerrain != FrequencyForTerrain){
 		delete heightfield;
 		heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-		heightfield->createTerrain(200 + whateverValueToPass, 200 + whateverValueToPass, land_size, land_size);
+		heightfield->createTerrain(200 + SizeOfTerrain, 200 + SizeOfTerrain, land_size, land_size);
 		heightfield->createObject();
 		std::cout << "frequency";
 		std::cout << FrequencyForTerrain;
 	}
+	
 	heightfield->drawObject(drawmode);
 	tempScaleTerrain = scaleTerrain;
 	tempFrequencyForTerrain = FrequencyForTerrain;
-	tempWhateverValueToPass = whateverValueToPass;
+	tempSizeOfTerrain = SizeOfTerrain;
 
 	glDisableVertexAttribArray(0);
 	glUseProgram(0);
@@ -402,44 +414,28 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == 'Q'){
+		FrequencyForTerrain += 1;
+	}
+	if (key == 'W'){
 
-	if (key == 'Q') angle_inc_x -= 0.05f;
-	if (key == 'W') angle_inc_x += 0.05f;
-	if (key == 'E') angle_inc_y -= 0.05f;
-	if (key == 'R') angle_inc_y += 0.05f;
-	if (key == 'T') angle_inc_z -= 0.05f;
-	if (key == 'Y') angle_inc_z += 0.05f;
+		FrequencyForTerrain -= 1;
+	}
+
 	if (key == 'A'){
 
 		scale -= 0.02f;
 		scaleTerrain -= 1.0;
-		whateverValueToPass -= 10;
+		SizeOfTerrain -= 10;
 	}
 	if (key == 'S'){
 
 		scale += 0.02f;
 		scaleTerrain += 1.0;
-		whateverValueToPass += 10;
+		SizeOfTerrain += 10;
 		
 	}
-	if (key == 'Z') x -= 0.05f;
-	if (key == 'X') x += 0.05f;
-	if (key == 'C') y -= 0.05f;
-	if (key == 'V') y += 0.05f;
-	if (key == 'B') z -= 0.05f;
-	if (key == 'N') z += 0.05f;
-	if (key == 'J') {
-		scaleTerrain += 1.0;
-		whateverValueToPass += 10;
-	}
-	if (key == 'K'){
 
-		scaleTerrain -= 1.0;
-		whateverValueToPass -= 10;
-	}
-	if (key == '8') FrequencyForTerrain += 5;
-	if (key == '9') FrequencyForTerrain -= 5;
-	
 	if (key == 'M' && action != GLFW_PRESS)
 	{
 		colourmode = !colourmode;
@@ -453,61 +449,8 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 		if (drawmode > 2) drawmode = 0;
 	}
 
-	if (key == 'P')
-	{
-		printf("\nScale = %f", scale);
-		printf("\nangle_x=%f", angle_x);
-		printf("\nx=%f", x);
-	}
+	
 
-	if (key == '[' && action != GLFW_PRESS)
-	{
-		if (octaves > 1) octaves--;
-		recreate_terrain = true;
-		printf("\nOctave = %d", octaves);
-	}
-	if (key == ']' && action != GLFW_PRESS)
-	{
-		if (octaves < 12) octaves++;
-		recreate_terrain = true;
-		printf("\nOctave = %d", octaves);
-	}
-
-	if (key == 'L' && action != GLFW_PRESS)
-	{
-		perlin_frequency -= 0.1f;
-		recreate_terrain = true;
-		printf("\nperlin_frequency = %f", perlin_frequency);
-	}
-
-	if (key == ';' && action != GLFW_PRESS)
-	{
-		perlin_frequency += 0.1f;
-		recreate_terrain = true;
-		printf("\nperlin_frequency = %f", perlin_frequency);
-	}
-
-	if (key == ',' && action != GLFW_PRESS)
-	{
-		perlin_scale -= 0.1f;
-		recreate_terrain = true;
-		printf("\nperlin_scale = %f", perlin_scale);
-	}
-
-	if (key == '.' && action != GLFW_PRESS)
-	{
-		perlin_frequency += 0.1f;
-		recreate_terrain = true;
-		printf("\nperlin_scale = %f", perlin_scale);
-	}
-
-	if (recreate_terrain)
-	{
-		delete heightfield;
-		heightfield = new terrain_object(octaves, perlin_frequency, perlin_scale);
-		heightfield->createTerrain(200, 200, land_size, land_size);
-		heightfield->createObject();
-	}
 }
 
 /* Entry point of program */

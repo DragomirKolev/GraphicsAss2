@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="noiseutils.cpp" />
     <ClCompile Include="object_ldr.cpp" />
     <ClCompile Include="terrain.cpp" />
     <ClCompile Include="terrain_object.cpp" />

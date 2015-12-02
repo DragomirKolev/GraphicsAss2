@@ -6,11 +6,12 @@ Iain Martin November 2014
 #include "terrain_object.h"
 #include <glm/gtc/noise.hpp>
 #include "noise.h"
+#include "noiseutils.h"
 
 using namespace noise;
-int whateverValue = 1;
+int SizeOfTerrainExtracted = 1;
 GLdouble scaleForTerrain = 15.0;
-GLdouble frequencyOfTerrain = 2;
+GLdouble frequencyOfTerrain = 1;
 
 /* Define the vertex attributes for vertex positions and normals.
 Make these match your application and vertex shader
@@ -34,11 +35,11 @@ terrain_object::~terrain_object()
 	if (vertices) delete[] vertices;
 	if (normals) delete[] normals;
 }
-
-void terrain_object::getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed, int whateverValuePassed){
+// function that takes values from the terrain class, and uses them in other functions. At first it was taking up 3 values, now it does only 2 but there wasn't much time for me to alter it. The size of terrain is being used in the terrain.cpp file
+void terrain_object::getValuesFromTerrainClass(GLdouble scaleTerrainPassed, GLdouble frequencyForTerrainPassed, int SizeOfTerrain){
 	scaleForTerrain = scaleTerrainPassed;
 	frequencyOfTerrain = frequencyForTerrainPassed; 
-	whateverValue = whateverValuePassed;
+	SizeOfTerrainExtracted = SizeOfTerrain;
 }
 
 
@@ -111,7 +112,7 @@ void terrain_object::drawObject(int drawmode)
 		glDrawElements(GL_TRIANGLE_STRIP, zsize * 2, GL_UNSIGNED_INT, (GLvoid*)(location));
 	}
 }
-
+//the previous calculate noise function which is not used in the program, decided to keep it in for reference if need be
 void terrain_object::calculateNoiseGLM()
 {
 	/* Create the array to store the noise values */
@@ -154,8 +155,7 @@ void terrain_object::calculateNoiseGLM()
 	}
 }
 
-/* Define the terrian heights */
-/* Uses code adapted from OpenGL Shading Language Cookbook: Chapter 8 */
+//This function is the one I used to calculate the Noise using the Libnoise library 
 void terrain_object::calculateNoise()
 {
 	/* Create the array to store the noise values */
@@ -167,13 +167,48 @@ void terrain_object::calculateNoise()
 	GLfloat zfactor = 1.f / (zsize - 1);
 	GLfloat freq = perlin_freq;
 	GLfloat scale = perlin_scale;
-	//added now
-	module::Perlin myModule;
-	double value;
 	
-	//till here
+	//This peace of code initializes the module I use to create the noise and also a heightmap
+	module::Perlin myModule;
+	myModule.SetOctaveCount(6);
+	myModule.SetFrequency(frequencyOfTerrain);
+	myModule.SetPersistence(0.5);
+	double value;
+	utils::NoiseMap heightMap;
+	utils::NoiseMapBuilderPlane heightMapBuilder;
+	heightMapBuilder.SetSourceModule(myModule);
+	heightMapBuilder.SetDestNoiseMap(heightMap);
+	heightMapBuilder.SetDestSize(zsize, xsize);
+	heightMapBuilder.SetBounds(1.0, 6.0, 1.0, 5.0);
+	heightMapBuilder.Build();
 
-	for (int row = 0; row < zsize; row++)
+
+	//this code was taken from the libnoise tutorials but is not needed for the current project, I used it to play around with the values and see how it changes up the output.
+	/*
+	utils::RendererImage renderer;
+	utils::Image image;
+	renderer.SetSourceNoiseMap(heightMap);
+	renderer.SetDestImage(image);
+	renderer.ClearGradient();
+	renderer.AddGradientPoint(-1.0000, utils::Color(0, 0, 128, 255)); // deeps
+	renderer.AddGradientPoint(-0.2500, utils::Color(0, 0, 255, 255)); // shallow
+	renderer.AddGradientPoint(0.0000, utils::Color(0, 128, 255, 255)); // shore
+	renderer.AddGradientPoint(0.0625, utils::Color(240, 240, 64, 255)); // sand
+	renderer.AddGradientPoint(0.1250, utils::Color(32, 160, 0, 255)); // grass
+	renderer.AddGradientPoint(0.3750, utils::Color(224, 224, 0, 255)); // dirt
+	renderer.AddGradientPoint(0.7500, utils::Color(128, 128, 128, 255)); // rock
+	renderer.AddGradientPoint(1.0000, utils::Color(255, 255, 255, 255)); // snow
+	renderer.EnableLight();
+	renderer.Render();
+
+	utils::WriterBMP writer;
+	writer.SetSourceImage(image);
+	writer.SetDestFilename("tutorial.bmp");
+	writer.WriteDestFile();
+	*/
+
+	//these for loops initialize the terrain with the passed through values for zsize and xsize
+	for (int row = 0; row <zsize; row++)
 	{
 		for (int col = 0; col < xsize; col++)
 		{
@@ -182,30 +217,39 @@ void terrain_object::calculateNoise()
 			GLfloat sum = 0;
 			GLfloat curent_scale = scale;
 			GLfloat current_freq = freq;
+		
+				//this code extracts the value from the heightmap on the current position of the loops and puts it into a double
+				value = heightMap.GetValue(row,col);	
+				//this peace of code puts the value from the heightmap multiplied by the scale of the terrain passed from the other class into an array which generates the noise.
+				noise[(row * xsize + col) * perlin_octaves] = value*scaleForTerrain;
 
-			//this
-			for (int oct = 0; oct < 4; oct++)
-			{
-	//			value = myModule.GetValue(col + 2.13, row + 20.25, 0);
-				value = myModule.GetValue(row / scaleForTerrain, col / scaleForTerrain, 0);
-			//	std::cout << "frequencyOfTerrain" << std::endl;
-			//	std::cout << frequencyOfTerrain << std::endl;
-				noise[(row * xsize + col) * perlin_octaves + oct] = value*scaleForTerrain;
+
+				//This commented out code was trying to figure out the highest point of the mountains so that I could put a Goat on top of the highest point.
+				//It wsa giving some weird errors so I turned that idea back, since I could not get the object loader to load a Goat or a Sheep after altering the obj loader class and the obj files themselves.
+				//value = myModule.GetValue(row / scaleForTerrain, col / scaleForTerrain, 0);
+				
+			//	if (currentValue < value*scaleForTerrain){
+			//		MaxValueFor = currentValue;
+			//		std::cout << MaxValueFor;
+			//	}
+
 
 			}
 
 		}
 
+
 	}
+	
 
-}
-
+//}
 /* Define the vertex array that specifies the terrain
 (x, y) specifies the pixel dimensions of the heightfield (x * y) vertices
 (xs, ys) specifies the size of the heightfield region in world coords
 */
 void terrain_object::createTerrain(GLuint xp, GLuint zp, GLfloat xs, GLfloat zs)
 {
+
 	xsize = xp;
 	zsize = zp;
 	width = xs;
@@ -263,7 +307,8 @@ void terrain_object::createTerrain(GLuint xp, GLuint zp, GLfloat xs, GLfloat zs)
 
 	// Calculate the normals by averaging cross products for all triangles 
 	calculateNormals();
-	
+
+
 }
 
 /* Calculate normals by using cross products along the triangle strips

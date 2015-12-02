@@ -2,7 +2,6 @@
 
 #version 400
 
-// These are the vertex attributes
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 colour;
 layout(location = 2) in vec3 normal;
@@ -14,7 +13,7 @@ uniform uint colourmode;
 // Output the vertex colour - to be rasterized into pixel fragments
 out vec4 fcolour;
 vec4 ambient = vec4(0.2, 0.2,0.2,1.0);
-vec3 light_dir = vec3(0.0, 0.0, 10.0);
+vec3 light_dir = vec3(0.0, 0.0, 13.0);
 
 void main()
 {
@@ -35,20 +34,24 @@ void main()
 		}
 		else if (position.y < 3.0)
 		{
-		//blue
-		diffuse_colour = vec4(0.2, 0.2, 1.0, 1.0);
-		//	diffuse_colour = vec4(0.0, 0.6, 0.2, 1.0);
+		//water
+	 	diffuse_colour = vec4(0.2, 0.2, 1.0, 1.0);
+			
+		}
+		else if (position.y < 4.0){
+		//sand
+		diffuse_colour = vec4(0.6, 0.4, 0.0, 1.0);
 		}
 		
 		else if (position.y < 7.0)
 		{
-		//brown
+		//hill
 			diffuse_colour = vec4(0.6, 0.4, 0.2, 1.0);
 		}
 		else if (position.y < 12.0)
 		{
 
-		//white
+		//snow
 		diffuse_colour = vec4(0.7, 0.8, 0.9, 1.0);
 			
 		}
@@ -77,4 +80,5 @@ void main()
 	// Define the vertex position
 	gl_Position = projection * view * model * position_h;
 }
+
 
