@@ -22,19 +22,23 @@ void main()
 	vec4 position_h = vec4(position, 1.0);
 	float shininess = 8.0;
 	
+
+	//if set to no color display everything in this color
 	if (colourmode == 1)
 	{
 		diffuse_colour = vec4(0.8,0.6,0.2,1.0);
 	}
+	//if set to color get the height values and use them to choose what color to put where!
 	else
 	{
 		if (position.y <= 0)
 		{
+			//water
 			diffuse_colour = vec4(0.2, 0.2, 1.0, 1.0);
 		}
 		else if (position.y < 3.0)
 		{
-		//water
+		//more water
 	 	diffuse_colour = vec4(0.2, 0.2, 1.0, 1.0);
 			
 		}
@@ -45,13 +49,13 @@ void main()
 		
 		else if (position.y < 7.0)
 		{
-		//hill
+		//mountain(hill)
 			diffuse_colour = vec4(0.6, 0.4, 0.2, 1.0);
 		}
 		else if (position.y < 12.0)
 		{
 
-		//snow
+		//snow(top)
 		diffuse_colour = vec4(0.7, 0.8, 0.9, 1.0);
 			
 		}

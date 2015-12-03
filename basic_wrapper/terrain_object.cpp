@@ -178,8 +178,11 @@ void terrain_object::calculateNoise()
 	utils::NoiseMapBuilderPlane heightMapBuilder;
 	heightMapBuilder.SetSourceModule(myModule);
 	heightMapBuilder.SetDestNoiseMap(heightMap);
+	//generates zsize*xsize noise values
 	heightMapBuilder.SetDestSize(zsize, xsize);
-	heightMapBuilder.SetBounds(1.0, 6.0, 1.0, 5.0);
+	//the cooridinates passed into this function are as follows lower-x, upper-x, lower-z, and upper-z.
+	//by modifying these you would get different height values!
+	heightMapBuilder.SetBounds(3.0, 7.0, 5.0, 9.0);
 	heightMapBuilder.Build();
 
 
@@ -265,6 +268,8 @@ void terrain_object::createTerrain(GLuint xp, GLuint zp, GLfloat xs, GLfloat zs)
 
 	/* First calculate the noise array which we'll use for our vertex height values */
 	calculateNoise();
+
+	//not used anymore, kept for reference
 	//calculateNoiseGLM();
 
 	/* Define starting (x,z) positions and the step changes */

@@ -8,7 +8,7 @@
 // your option) any later version.
 //
 // This library is distributed in the hope that it will be useful, but WITHOUT
-// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY ord
 // FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 // License (COPYING.txt) for more details.
 //

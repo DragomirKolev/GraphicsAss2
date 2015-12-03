@@ -39,6 +39,7 @@
     <ProjectGuid>{E45B2AFE-BE6B-44D2-ADC4-A581BBCE45EA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>basic_wrapper</RootNamespace>
+    <ProjectName>DK Assignment 2</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
