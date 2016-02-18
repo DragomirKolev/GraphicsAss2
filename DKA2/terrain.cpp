@@ -31,6 +31,21 @@ GLuint positionBufferObject, colourObject, normalsBufferObject;
 GLuint sphereBufferObject, sphereNormals, sphereColours, sphereTexCoords;
 GLuint elementbuffer;
 object_ldr monkey;
+
+bool keys[1024];
+
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+//glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+
 GLuint program;		/* Identifier for the shader prgoram */
 GLuint vao;			/* Vertex array (Containor) object. This is the index of the VAO that will be the container for
 					our buffer objects */
@@ -272,6 +287,17 @@ void init(GLWrapper *glw)
 	colourmodeID = glGetUniformLocation(program, "colourmode");
 	viewID = glGetUniformLocation(program, "view");
 	projectionID = glGetUniformLocation(program, "projection");
+
+
+
+	//display controls in the cosole
+	std::cout << "Move in and out of the terrain with A - S" << std::endl;
+	std::cout << "Change the frequency with Q - W (if the frequency is 0, you will not get any terrain!)" << std::endl;
+	std::cout << "Press M to put color on and off on the objects " << std::endl;
+	std::cout << "Press N to show the vertecies on the objects " << std::endl;
+
+
+
 }
 
 /* Called to update the display. Note that this function is called in the event loop in the wrapper
@@ -316,12 +342,18 @@ void display()
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	glm::mat4 Projection = glm::perspective(30.0f, aspect_ratio, 0.1f, 100.0f);
 
+
+
+	GLfloat radius = 10.0f;
+	GLfloat camX = sin(glfwGetTime()) * radius;
+	GLfloat camZ = cos(glfwGetTime()) * radius;
+
+
+
 	// Camera matrix
-	glm::mat4 View = glm::lookAt(
-		glm::vec3(0, 0, 5), // Camera is at (0,0,5), in World Space
-		glm::vec3(0, 0, 0), // and looks at the origin
-		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		);
+	glm::mat4 View = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+
 
 	// Send our uniforms variables to the currently bound shader,
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
@@ -395,33 +427,48 @@ static void reshape(GLFWwindow* window, int w, int h)
 /* change view angle, exit upon ESC */
 static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods)
 {
+	
+	if (action == GLFW_PRESS)
+		keys[key] = true;
+	else if (action == GLFW_RELEASE)
+		keys[key] = false;
 
+	// Camera controls
+	GLfloat cameraSpeed = 0.1f;
+	if (keys[GLFW_KEY_W])
+		cameraPos += cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_S])
+		cameraPos -= cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_A])
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 
 	//change the frequency
-	if (key == 'Q' && action != GLFW_PRESS){
-		FrequencyForTerrain += 1;
-	}
-	if (key == 'W' && action != GLFW_PRESS){
+	//if (key == 'Q' && action != GLFW_PRESS){
+	//	FrequencyForTerrain += 1;
+	//}
+	//if (key == 'W' && action != GLFW_PRESS){
 
-		FrequencyForTerrain -= 1;
-	}
+	//	FrequencyForTerrain -= 1;
+	//}
 	//change the scale of the terrain and the detail of the mesh
-	if (key == 'A' && action != GLFW_PRESS){
+	//if (key == 'A' && action != GLFW_PRESS){
 
-		scale -= 0.02f;
-		scaleTerrain -= 1.0;
-		SizeOfTerrain -= 10;
-	}
-	if (key == 'S' && action != GLFW_PRESS){
+//		scale -= 0.02f;
+//		scaleTerrain -= 1.0;
+	///	SizeOfTerrain -= 10;
+//	}
+//	if (key == 'S' && action != GLFW_PRESS){
 
-		scale += 0.02f;
-		scaleTerrain += 1.0;
-		SizeOfTerrain += 10;
-		
-	}
+//		scale += 0.02f;
+//		scaleTerrain += 1.0;
+//		SizeOfTerrain += 10;
+//		
+//	}
 	//disable and enable colour 
 	if (key == 'M' && action != GLFW_PRESS)
 	{
@@ -439,6 +486,8 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	
 
 }
+
+
 
 /* Entry point of program */
 int main(int argc, char* argv[])
@@ -458,6 +507,7 @@ int main(int argc, char* argv[])
 	init(glw);
 
 	glw->eventLoop();
+
 
 	delete(glw);
 	return 0;
